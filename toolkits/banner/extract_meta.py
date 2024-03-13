@@ -4,20 +4,28 @@
 import sys
 import os
 import argparse
+import re
 import json
+
+garbage_utterance_tags = "<SIL>|<MUSIC>|<NOISE>|<OTHER>"
+punctuation_tags = "<COMMA>|<EXCLAMATIONPOINT>|<PERIOD>|<QUESTIONMARK>"
 
 
 def get_args():
     parser = argparse.ArgumentParser(description="""
       This script is used to process raw json dataset of GigaSpeech,
       where the long wav is splitinto segments and
-      data of wenet format is generated.
+      data of kaldi format is generated.
       """)
     parser.add_argument('input_json', help="""Input json file of Gigaspeech""")
     parser.add_argument('output_dir', help="""Output dir for prepared data""")
 
     args = parser.parse_args()
     return args
+
+
+def prepare_date(transcriptions):
+    transcriptions2 = re.sub(punctuation_tags, "", transcriptions)
 
 
 def meta_analysis(input_json, output_dir):
@@ -59,7 +67,14 @@ def meta_analysis(input_json, output_dir):
                                 sid = segment_file['sid']
                                 start_time = segment_file['begin_time']
                                 end_time = segment_file['end_time']
+
                                 text = segment_file['text_tn']
+                                if re.search(garbage_utterance_tags, text):
+                                    print("text1: %s" % text)
+                                    continue
+                                text = re.sub(punctuation_tags, "", text)
+                                text = re.sub("  ", " ", text)
+
                                 segment_subsets = segment_file["subsets"]
                             except:
                                 print(f'Warning: {segment_file} something is wrong, skipped')
